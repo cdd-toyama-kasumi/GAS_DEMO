@@ -53,6 +53,11 @@ class GAS_DEMO_API ABaseCharacter : public ACharacter
 	UPROPERTY(EditDefaultsOnly)
 	TMap<int,FName> AttackMapping = {{0,"ATK_0"},{1,"ATK_1"},{2,"ATK_2"}};
 	
+	UPROPERTY(EditDefaultsOnly)
+	float ComboTimeWindow = 2.0f;
+	
+	float ComboStartTime;
+	
 public:
 	// Sets default values for this character's properties
 	ABaseCharacter();

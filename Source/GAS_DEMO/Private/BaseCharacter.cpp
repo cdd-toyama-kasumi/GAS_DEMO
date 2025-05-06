@@ -112,6 +112,15 @@ void ABaseCharacter::Attack()
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("NowTime:%f ComboStartTime: %f"), GetWorld()->GetTimeSeconds(), ComboStartTime);
+
+			if (GetWorld()->GetTimeSeconds() - ComboStartTime > ComboTimeWindow)
+			{
+				AttackSequence = 0;
+				ComboStartTime = GetWorld()->GetTimeSeconds();
+			}
+			ComboStartTime = GetWorld()->GetTimeSeconds();
+
 			float PlayRate = 1.0f;
 			FName SectionName = *AttackMapping.Find(AttackSequence++);
 			float bTime = PlayAnimMontage(NormalAttackMontage, PlayRate, *SectionName.ToString());
