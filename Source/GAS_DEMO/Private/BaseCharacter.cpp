@@ -8,6 +8,9 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "AbilitySystemComponent.h"
+#include "Ability/Melee.h"
+
 // Sets default values
 ABaseCharacter::ABaseCharacter()
 {
@@ -19,6 +22,13 @@ ABaseCharacter::ABaseCharacter()
 	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>("AbilitySystemComponent");
+}
+
+UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
 
 // Called when the game starts or when spawned
@@ -31,18 +41,12 @@ void ABaseCharacter::BeginPlay()
 	CameraComponent->bUsePawnControlRotation = false;
 	bUseControllerRotationYaw = false;
 
-	if (NormalAttackMontage)
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+	if (MeleeAbility)
 	{
-		TArray<FAnimNotifyEvent> Events = NormalAttackMontage->Notifies;
-		for (FAnimNotifyEvent Event : Events)
-		{
-			UAttackFinishNotify* FinishEventNotify = Cast<UAttackFinishNotify>(Event.Notify);
-			if (FinishEventNotify)
-			{
-				FinishEventNotify->OnNotified.AddUObject(this, &ABaseCharacter::OnAttackFinish);
-				UE_LOG(LogTemp, Warning, TEXT("AttackFinishNotify registered successfully!"));
-			}
-		}
+		FGameplayAbilitySpec AbilitySpec(MeleeAbility, 1, 0);
+		AbilitySystemComponent->GiveAbility(AbilitySpec);
 	}
 }
 
@@ -85,7 +89,7 @@ void ABaseCharacter::Lock()
 	TargetLocation.Z += CameraMoveHeight;
 	CameraComponent->SetRelativeLocation(FMath::Lerp(CameraComponent->GetRelativeLocation(), TargetLocation, Delta));
 
-	float  TargetArmLength = SpringArmLength + SpringArmAddLength;
+	float TargetArmLength = SpringArmLength + SpringArmAddLength;
 	SpringArmComponent->TargetArmLength = FMath::Lerp(SpringArmComponent->TargetArmLength, TargetArmLength, Delta);
 }
 
@@ -98,57 +102,6 @@ void ABaseCharacter::StopLock()
 	//float Delta = GetWorld()->GetDeltaSeconds();
 	CameraComponent->SetRelativeLocation(CameraLocation);
 	SpringArmComponent->TargetArmLength = SpringArmLength;
-}
-
-void ABaseCharacter::Attack()
-{
-	if (IsAttacking)
-	{
-		return;
-	}
-	if (NormalAttackMontage)
-	{
-		IsAttacking = true;
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("NowTime:%f ComboStartTime: %f"), GetWorld()->GetTimeSeconds(), ComboStartTime);
-
-			if (GetWorld()->GetTimeSeconds() - ComboStartTime > ComboTimeWindow)
-			{
-				AttackSequence = 0;
-				ComboStartTime = GetWorld()->GetTimeSeconds();
-			}
-			ComboStartTime = GetWorld()->GetTimeSeconds();
-
-			float PlayRate = 1.0f;
-			FName SectionName = *AttackMapping.Find(AttackSequence++);
-			float bTime = PlayAnimMontage(NormalAttackMontage, PlayRate, *SectionName.ToString());
-			if (bTime != 0.0f)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("NormalAttackMontage started playing on section: %s"), *SectionName.ToString());
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Failed to play NormalAttackMontage on section: %s"), *SectionName.ToString());
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Animation instance is invalid!"));
-		}
-
-		if (AttackSequence >= AttackMapping.Num())
-		{
-			AttackSequence = 0;
-		}
-	}
-}
-
-void ABaseCharacter::OnAttackFinish(USkeletalMeshComponent* MeshComp)
-{
-	UE_LOG(LogTemp,Warning,TEXT("Attack Finish"));
-	IsAttacking = false;
 }
 
 // Called every frame
@@ -179,8 +132,20 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		Input->BindAction(LockAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Lock);
 		Input->BindAction(LockAction, ETriggerEvent::Completed, this, &ABaseCharacter::StopLock);
-
-		Input->BindAction(NormalAttack, ETriggerEvent::Triggered, this, &ABaseCharacter::Attack);
+		
+		Input->BindAction(NormalAttack, ETriggerEvent::Triggered, this, &ABaseCharacter::OnAttackInput);
 	}
 }
 
+void ABaseCharacter::OnAttackInput()
+{
+	if (AbilitySystemComponent && MeleeAbility)
+	{
+		AbilitySystemComponent->TryActivateAbilitiesByTag(GameplayTagContainer);
+		/*FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromClass(MeleeAbility);
+		if (Spec)
+		{
+			//AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+		}*/
+	}
+}

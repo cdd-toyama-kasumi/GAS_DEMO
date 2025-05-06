@@ -5,20 +5,26 @@
 #include "CoreMinimal.h"
 #include "AttackFinishNotify.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
+#include "GameplayTagContainer.h"
+
 #include "BaseCharacter.generated.h"
 
+class UGameplayAbility;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-
+class UAbilitySystemComponent;
+class UMelee;
 struct FInputActionValue;
 
 UCLASS()
-class GAS_DEMO_API ABaseCharacter : public ACharacter
+class GAS_DEMO_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-	
+
+	//Action
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
 
@@ -36,7 +42,8 @@ class GAS_DEMO_API ABaseCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* NormalAttack;
-	
+
+	//View
 	UPROPERTY(EditDefaultsOnly)
 	float CameraMoveHeight = 50.f;
 	FVector CameraLocation;
@@ -45,26 +52,18 @@ class GAS_DEMO_API ABaseCharacter : public ACharacter
 	float SpringArmAddLength = 100.f;
 	float SpringArmLength;
 
-	//Normal Attack
 	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* NormalAttackMontage;
-
-	int AttackSequence = 0;
-	UPROPERTY(EditDefaultsOnly)
-	TMap<int,FName> AttackMapping = {{0,"ATK_0"},{1,"ATK_1"},{2,"ATK_2"}};
+	FGameplayTagContainer GameplayTagContainer;
 	
-	UPROPERTY(EditDefaultsOnly)
-	float ComboTimeWindow = 2.0f;
-	
-	float ComboStartTime;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UMelee> MeleeAbility;
 	
 public:
 	// Sets default values for this character's properties
 	ABaseCharacter();
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsAttacking = false;
-	
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -76,17 +75,21 @@ protected:
 	void Lock();
 
 	void StopLock();
+	
+	void OnAttackInput();
 
-	void Attack();
-
-	void OnAttackFinish(USkeletalMeshComponent* MeshComp);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsAttacking = false;
+			
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UAbilitySystemComponent* AbilitySystemComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UCameraComponent* CameraComponent;
