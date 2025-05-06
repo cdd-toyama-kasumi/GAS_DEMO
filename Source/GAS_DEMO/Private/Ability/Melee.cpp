@@ -15,7 +15,6 @@ UMelee::UMelee()
 void UMelee::OnAttackFinish(USkeletalMeshComponent* MeshComp)
 {
 	UE_LOG(LogTemp,Warning,TEXT("Attack Finish"));
-	IsAttacking = false;
 	ComboStartTime = GetWorld()->GetTimeSeconds();
 }
 
@@ -39,7 +38,7 @@ void UMelee::RegisterCallback()
 
 void UMelee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-    if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+    if (!CommitAbilityCooldown(Handle, ActorInfo, ActivationInfo, true))
     {
         return;
     }
@@ -51,16 +50,8 @@ void UMelee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGam
         RegisterCallback();
     }
 	
-    if (IsAttacking)
-    {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-        return;
-    }
-	
     if (NormalAttackMontage)
     {
-        IsAttacking = true;
-    	
         UE_LOG(LogTemp, Warning, TEXT("NowTime:%f ComboStartTime: %f"), GetWorld()->GetTimeSeconds(), ComboStartTime);
     	if (GetWorld()->GetTimeSeconds() - ComboStartTime > ComboTimeWindow)
     	{
@@ -83,7 +74,6 @@ void UMelee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGam
     	{
     		AttackSequence = 0;
     	}
-    	
-    	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
     }
+	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }

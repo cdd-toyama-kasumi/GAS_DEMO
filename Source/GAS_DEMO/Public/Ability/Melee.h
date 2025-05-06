@@ -27,9 +27,6 @@ public:
 	float ComboTimeWindow = 2.0f;
 	
 	float ComboStartTime;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsAttacking = false;
 
 	bool bIsCallbackRegistered = false;
 	
@@ -39,5 +36,4 @@ public:
 	int AttackSequence = 0;
 	UPROPERTY(EditDefaultsOnly)
 	TMap<int,FName> AttackMapping = {{0,"ATK_0"},{1,"ATK_1"},{2,"ATK_2"}};
-	
 };
