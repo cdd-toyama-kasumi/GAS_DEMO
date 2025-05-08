@@ -5,6 +5,7 @@
 
 #include "AttackFinishNotify.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/PawnMovementComponent.h"
 
 UMelee::UMelee()
 {
@@ -59,21 +60,29 @@ void UMelee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGam
     	}
 
     	float PlayRate = 1.0f;
-    	FName SectionName = *AttackMapping.Find(AttackSequence++);
-    	float bTime = Character->PlayAnimMontage(NormalAttackMontage, PlayRate, *SectionName.ToString());
-    	if (bTime != 0.0f)
-    	{
-    		UE_LOG(LogTemp, Warning, TEXT("NormalAttackMontage started playing on section: %s"), *SectionName.ToString());
-    	}
-    	else
-    	{
-    		UE_LOG(LogTemp, Error, TEXT("Failed to play NormalAttackMontage on section: %s"), *SectionName.ToString());
-    	}
 
-    	if (AttackSequence >= AttackMapping.Num())
+    	if (Character->GetMovementComponent()->IsFalling())
     	{
-    		AttackSequence = 0;
+    		Character->PlayAnimMontage(NormalAttackMontage, PlayRate, "ATK_Jump");
     	}
+	    else
+	    {
+	    	FName SectionName = *AttackMapping.Find(AttackSequence++);
+	    	float bTime = Character->PlayAnimMontage(NormalAttackMontage, PlayRate, *SectionName.ToString());
+	    	if (bTime != 0.0f)
+	    	{
+	    		UE_LOG(LogTemp, Warning, TEXT("NormalAttackMontage started playing on section: %s"), *SectionName.ToString());
+	    	}
+	    	else
+	    	{
+	    		UE_LOG(LogTemp, Error, TEXT("Failed to play NormalAttackMontage on section: %s"), *SectionName.ToString());
+	    	}
+
+	    	if (AttackSequence >= AttackMapping.Num())
+	    	{
+	    		AttackSequence = 0;
+	    	}
+	    }
     }
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }

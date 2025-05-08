@@ -135,6 +135,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		
 		Input->BindAction(NormalAttack, ETriggerEvent::Triggered, this, &ABaseCharacter::OnAttackInput);
 	}
+
 }
 
 void ABaseCharacter::OnAttackInput()
