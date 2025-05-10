@@ -17,7 +17,10 @@ class UInputMappingContext;
 class UInputAction;
 class UAbilitySystemComponent;
 class UMelee;
+
 struct FInputActionValue;
+struct FOnAttributeChangeData;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangeEvent,  float, NewHealth);
 
 UCLASS()
 class GAS_DEMO_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
@@ -57,13 +60,26 @@ class GAS_DEMO_API ABaseCharacter : public ACharacter, public IAbilitySystemInte
 	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UMelee> MeleeAbility;
+
+	FOnHealthChangeEvent OnHealthChange;
 	
+	void HealthChange(const FOnAttributeChangeData& HealthData);
+
+	UFUNCTION()
+	void ProcHealthChange(float NewHealth);
+
 public:
 	// Sets default values for this character's properties
 	ABaseCharacter();
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	UFUNCTION(BlueprintNativeEvent)
+	void Death() ;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsDead = false;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -75,7 +91,8 @@ protected:
 	void Lock();
 
 	void StopLock();
-	
+
+	UFUNCTION(BlueprintCallable)
 	void OnAttackInput();
 
 public:	

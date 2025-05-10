@@ -9,7 +9,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "AbilitySystemComponent.h"
+#include "BaseAttributeSet.h"
 #include "Ability/Melee.h"
+
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -31,6 +33,11 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void ABaseCharacter::Death_Implementation()
+{
+	IsDead = true;
+}
+
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
@@ -47,6 +54,23 @@ void ABaseCharacter::BeginPlay()
 	{
 		FGameplayAbilitySpec AbilitySpec(MeleeAbility, 1, 0);
 		AbilitySystemComponent->GiveAbility(AbilitySpec);
+	}
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetHealthAttribute()).AddUObject(this, &ABaseCharacter::HealthChange);
+	OnHealthChange.AddDynamic(this, &ABaseCharacter::ProcHealthChange);
+}
+
+void ABaseCharacter::HealthChange(const FOnAttributeChangeData& HealthData)
+{
+	OnHealthChange.Broadcast(HealthData.NewValue);
+}
+
+void ABaseCharacter::ProcHealthChange(float NewHealth)
+{
+	UE_LOG(LogTemp, Error, TEXT("Name:%s Health: %f"), *GetName(), NewHealth);
+	if (NewHealth <= 0)
+	{
+		Death();
 	}
 }
 
