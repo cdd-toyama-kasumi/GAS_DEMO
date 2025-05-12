@@ -11,7 +11,7 @@
 #include "AbilitySystemComponent.h"
 #include "BaseAttributeSet.h"
 #include "Ability/Melee.h"
-
+#include "Ability/Regen.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -54,6 +54,12 @@ void ABaseCharacter::BeginPlay()
 	{
 		FGameplayAbilitySpec AbilitySpec(MeleeAbility, 1, 0);
 		AbilitySystemComponent->GiveAbility(AbilitySpec);
+	}
+
+	if (RegenAbility)
+	{
+		FGameplayAbilitySpec AbilitySpec(RegenAbility, 1, 0);
+		AbilitySystemComponent->GiveAbilityAndActivateOnce(AbilitySpec);
 	}
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetHealthAttribute()).AddUObject(this, &ABaseCharacter::HealthChange);

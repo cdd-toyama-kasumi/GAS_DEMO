@@ -17,6 +17,7 @@ class UInputMappingContext;
 class UInputAction;
 class UAbilitySystemComponent;
 class UMelee;
+class URegen;
 
 struct FInputActionValue;
 struct FOnAttributeChangeData;
@@ -60,7 +61,10 @@ class GAS_DEMO_API ABaseCharacter : public ACharacter, public IAbilitySystemInte
 	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UMelee> MeleeAbility;
-
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<URegen> RegenAbility;
+	
 	FOnHealthChangeEvent OnHealthChange;
 	
 	void HealthChange(const FOnAttributeChangeData& HealthData);
