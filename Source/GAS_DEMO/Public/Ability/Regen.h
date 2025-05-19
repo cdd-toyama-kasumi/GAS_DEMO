@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseGameplayAbility.h"
 #include "Abilities/GameplayAbility.h"
 #include "Regen.generated.h"
 
@@ -10,7 +11,7 @@
  * 
  */
 UCLASS()
-class GAS_DEMO_API URegen : public UGameplayAbility
+class GAS_DEMO_API URegen : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

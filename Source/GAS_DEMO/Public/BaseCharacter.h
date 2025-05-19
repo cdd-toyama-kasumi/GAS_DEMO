@@ -10,6 +10,7 @@
 
 #include "BaseCharacter.generated.h"
 
+struct FGameplayAbilityInfo;
 class UGameplayAbility;
 class USpringArmComponent;
 class UCameraComponent;
@@ -18,11 +19,14 @@ class UInputAction;
 class UAbilitySystemComponent;
 class UMelee;
 class URegen;
+class UBaseGameplayAbility;
 
 struct FInputActionValue;
 struct FOnAttributeChangeData;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangeEvent,  float, NewHealth);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangeEvent,  float, NewHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChangeEvent,  float, NewMana);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStrengthChangeEvent,  float, NewStrength);
 UCLASS()
 class GAS_DEMO_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
@@ -64,20 +68,36 @@ class GAS_DEMO_API ABaseCharacter : public ACharacter, public IAbilitySystemInte
 	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<URegen> RegenAbility;
-	
+
+	UPROPERTY(BlueprintAssignable, Category="Ability")
 	FOnHealthChangeEvent OnHealthChange;
 	
+	UPROPERTY(BlueprintAssignable, Category="Ability")
+	FOnManaChangeEvent OnManaChange;
+
+	UPROPERTY(BlueprintAssignable, Category="Ability")
+	FOnStrengthChangeEvent OnStrengthChange;
+
 	void HealthChange(const FOnAttributeChangeData& HealthData);
+	void ManaChange(const FOnAttributeChangeData& ManaData);
+	void StrengthChange(const FOnAttributeChangeData& StrengthData);
 
 	UFUNCTION()
 	void ProcHealthChange(float NewHealth);
-
+	UFUNCTION()
+	void ProcManaChange(float NewMana);
+	UFUNCTION()
+	void ProcStrengthChange(float NewStrength);
+	
 public:
 	// Sets default values for this character's properties
 	ABaseCharacter();
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	UFUNCTION(BlueprintCallable, Category="Ability")
+	FGameplayAbilityInfo GetAbilityInfo(TSubclassOf<UBaseGameplayAbility>AbilityClass, int Level);
+	
 	UFUNCTION(BlueprintNativeEvent)
 	void Death() ;
 	

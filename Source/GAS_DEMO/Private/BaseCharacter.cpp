@@ -10,6 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "AbilitySystemComponent.h"
 #include "BaseAttributeSet.h"
+#include "BaseGameplayAbility.h"
 #include "Ability/Melee.h"
 #include "Ability/Regen.h"
 
@@ -31,6 +32,18 @@ ABaseCharacter::ABaseCharacter()
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+FGameplayAbilityInfo ABaseCharacter::GetAbilityInfo(TSubclassOf<UBaseGameplayAbility> AbilityClass, int Level)
+{
+	UBaseGameplayAbility* AbilityInstance = AbilityClass->GetDefaultObject<UBaseGameplayAbility>();
+	
+	if (AbilitySystemComponent && AbilityInstance)
+	{
+		return AbilityInstance->GetAbilityInfo(Level);
+	}
+	
+	return FGameplayAbilityInfo();
 }
 
 void ABaseCharacter::Death_Implementation()
@@ -63,12 +76,27 @@ void ABaseCharacter::BeginPlay()
 	}
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetHealthAttribute()).AddUObject(this, &ABaseCharacter::HealthChange);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetManaAttribute()).AddUObject(this, &ABaseCharacter::ManaChange);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStrengthAttribute()).AddUObject(this, &ABaseCharacter::StrengthChange);
+
 	OnHealthChange.AddDynamic(this, &ABaseCharacter::ProcHealthChange);
+	OnManaChange.AddDynamic(this, &ABaseCharacter::ProcManaChange);
+	OnStrengthChange.AddDynamic(this, &ABaseCharacter::ProcStrengthChange);
 }
 
 void ABaseCharacter::HealthChange(const FOnAttributeChangeData& HealthData)
 {
 	OnHealthChange.Broadcast(HealthData.NewValue);
+}
+
+void ABaseCharacter::ManaChange(const FOnAttributeChangeData& ManaData)
+{
+	OnManaChange.Broadcast(ManaData.NewValue);
+}
+
+void ABaseCharacter::StrengthChange(const FOnAttributeChangeData& StrengthData)
+{
+	OnStrengthChange.Broadcast(StrengthData.NewValue);
 }
 
 void ABaseCharacter::ProcHealthChange(float NewHealth)
@@ -78,6 +106,16 @@ void ABaseCharacter::ProcHealthChange(float NewHealth)
 	{
 		Death();
 	}
+}
+
+void ABaseCharacter::ProcManaChange(float NewMana)
+{
+	UE_LOG(LogTemp, Error, TEXT("Name:%s Mana: %f"), *GetName(), NewMana);
+}
+
+void ABaseCharacter::ProcStrengthChange(float NewStrength)
+{
+	UE_LOG(LogTemp, Error, TEXT("Name:%s Strength: %f"), *GetName(), NewStrength);
 }
 
 void ABaseCharacter::Move(const FInputActionValue& Value)
@@ -129,7 +167,6 @@ void ABaseCharacter::StopLock()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	//float Delta = GetWorld()->GetDeltaSeconds();
 	CameraComponent->SetRelativeLocation(CameraLocation);
 	SpringArmComponent->TargetArmLength = SpringArmLength;
 }
